@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incubation Word Puzzle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Using a high-quality parchment texture similar to the one you provided */
+            background-image: url('https://images.unsplash.com/photo-1594222393693-214e3e788b77?q=80&w=1974&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+        #a4-sheet {
+            width: 100%;
+            max-width: 8.27in; /* A4 width */
+            min-height: 11.7in; /* A4 height */
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(3px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        /* On smaller screens, make the sheet take up the full width/height */
+        @media (max-width: 8.5in) {
+            body {
+                padding: 0;
+            }
+            #a4-sheet {
+                min-height: 100vh;
+                border-radius: 0;
+                padding: 1rem;
+            }
+        }
+        .card {
+            background-color: transparent;
+            box-shadow: none;
+            width: 100%;
+        }
+        .scrambled-word {
+            letter-spacing: 0.5em;
+        }
+        .feedback {
+            transition: opacity 0.5s ease-in-out;
+        }
+        .hidden-feedback {
+            opacity: 0;
+        }
+        .success-animation {
+            animation: success-pulse 0.8s ease;
+        }
+        .error-animation {
+            animation: error-shake 0.5s ease;
+        }
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes error-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-8">
+    <div id="a4-sheet">
+        <div id="main-container" class="card max-w-lg p-0 sm:p-2 text-center">
+            <!-- Header -->
+            <h1 id="header-title" class="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-900 mb-2">Incubation Puzzle</h1>
+            <p id="progress-text" class="text-gray-600 dark:text-gray-700 mb-6 sm:mb-8">Unscramble the word below!</p>
+
+            <!-- Game Area -->
+            <div id="game-area">
+                <div class="bg-amber-100/50 dark:bg-amber-900/50 p-6 rounded-xl mb-6 border border-amber-300">
+                    <p id="scrambled-word" class="scrambled-word text-3xl sm:text-4xl font-bold text-amber-800 dark:text-amber-800 uppercase select-none"></p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <input type="text" id="answer-input" placeholder="Your answer..." class="flex-grow w-full text-lg px-4 py-3 bg-white/80 dark:bg-gray-200/80 border-2 border-gray-400 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500">
+                    <button id="submit-btn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-colors duration-300">Submit</button>
+                </div>
+                <div id="feedback-message" class="feedback hidden-feedback h-8 flex items-center justify-center">
+                    <p class="text-lg font-medium"></p>
+                </div>
+            </div>
+            
+            <!-- Post-Game Form -->
+            <form id="user-details-form" class="hidden text-left">
+                <div class="space-y-4">
+                    <div>
+                        <label for="name-input" class="block mb-2 text-sm font-medium text-gray-900">Full Name</label>
+                        <input type="text" id="name-input" class="bg-white/80 border border-gray-400 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="John Doe" required>
+                    </div>
+                     <div>
+                        <label for="email-input" class="block mb-2 text-sm font-medium text-gray-900">KPRCAS Email ID</label>
+                        <input type="email" id="email-input" class="bg-white/80 border border-gray-400 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="yourname@kprcas.ac.in" required>
+                        <p id="email-error" class="mt-2 text-sm text-red-600 hidden">Please enter a valid KPRCAS email address.</p>
+                    </div>
+                    <div>
+                        <label for="dept-input" class="block mb-2 text-sm font-medium text-gray-900">Department</label>
+                        <input type="text" id="dept-input" class="bg-white/80 border border-gray-400 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="e.g., Computer Science" required>
+                    </div>
+                </div>
+                <button type="submit" id="form-submit-btn" class="mt-6 w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Submit Details</button>
+            </form>
+
+            <!-- WhatsApp Link Area -->
+            <div id="whatsapp-link-container" class="hidden">
+                 <p class="text-gray-700 mb-4">Thank you! Click the number below to send your details via WhatsApp.</p>
+                 <a id="whatsapp-link" href="#" target="_blank" class="text-2xl font-bold text-blue-600 hover:underline">
+                     8903777979
+                 </a>
+                 <button id="restart-btn" class="mt-8 block w-full bg-gray-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 transition-colors duration-300">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const words = ['SYNERGY', 'PIVOTING', 'VALUATION', 'ACCELERATOR', 'INCUBATEE', 'VENTURE', 'IDEATION', 'PROTOTYPE', 'DISRUPTION', 'MONETIZE'];
+        let currentWordIndex = 0;
+        let score = 0;
+        let shuffledWords = [];
+
+        // Main elements
+        const mainContainer = document.getElementById('main-container');
+        const headerTitle = document.getElementById('header-title');
+        const progressTextEl = document.getElementById('progress-text');
+        
+        // Game elements
+        const gameArea = document.getElementById('game-area');
+        const scrambledWordEl = document.getElementById('scrambled-word');
+        const answerInputEl = document.getElementById('answer-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const feedbackTextEl = feedbackMessageEl.querySelector('p');
+
+        // Form elements
+        const userDetailsForm = document.getElementById('user-details-form');
+        const nameInput = document.getElementById('name-input');
+        const emailInput = document.getElementById('email-input');
+        const deptInput = document.getElementById('dept-input');
+        const emailError = document.getElementById('email-error');
+
+        // WhatsApp and Restart elements
+        const whatsappContainer = document.getElementById('whatsapp-link-container');
+        const whatsappLink = document.getElementById('whatsapp-link');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function scrambleWord(word) {
+            let scrambled = word.split('').sort(() => 0.5 - Math.random()).join('');
+            return (scrambled === word && word.length > 1) ? scrambleWord(word) : scrambled;
+        }
+
+        function nextWord() {
+            if (currentWordIndex < shuffledWords.length) {
+                const word = shuffledWords[currentWordIndex];
+                scrambledWordEl.textContent = scrambleWord(word);
+                answerInputEl.value = '';
+                answerInputEl.focus();
+                progressTextEl.textContent = `Word ${currentWordIndex + 1} of ${shuffledWords.length}`;
+            } else {
+                endGame();
+            }
+        }
+        
+        function checkAnswer() {
+            const userAnswer = answerInputEl.value.trim().toUpperCase();
+            const correctAnswer = shuffledWords[currentWordIndex];
+
+            if (userAnswer === correctAnswer) {
+                score++;
+                feedbackTextEl.textContent = 'Correct!';
+                feedbackTextEl.className = 'text-lg font-medium text-green-600';
+                mainContainer.classList.add('success-animation');
+                currentWordIndex++;
+                setTimeout(() => {
+                    nextWord();
+                    feedbackMessageEl.classList.add('hidden-feedback');
+                    mainContainer.classList.remove('success-animation');
+                }, 1000);
+            } else {
+                feedbackTextEl.textContent = 'Try again!';
+                feedbackTextEl.className = 'text-lg font-medium text-red-600';
+                mainContainer.classList.add('error-animation');
+                answerInputEl.focus();
+                 setTimeout(() => {
+                    mainContainer.classList.remove('error-animation');
+                }, 500);
+            }
+            feedbackMessageEl.classList.remove('hidden-feedback');
+        }
+
+        function endGame() {
+            gameArea.classList.add('hidden');
+            userDetailsForm.classList.remove('hidden');
+            headerTitle.textContent = 'Game Complete!';
+            progressTextEl.textContent = `You scored ${score} out of ${shuffledWords.length}! Please enter your details.`;
+            nameInput.focus();
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim().toLowerCase();
+            const department = deptInput.value.trim();
+
+            if (!email.endsWith('@kprcas.ac.in')) {
+                emailError.classList.remove('hidden');
+                return;
+            }
+             emailError.classList.add('hidden');
+            
+            if (!name || !department) {
+                // Using a simple custom message instead of alert()
+                emailError.textContent = "Please fill in all fields.";
+                emailError.classList.remove('hidden');
+                setTimeout(() => emailError.classList.add('hidden'), 3000);
+                return;
+            }
+
+            userDetailsForm.classList.add('hidden');
+            whatsappContainer.classList.remove('hidden');
+            headerTitle.textContent = "You're All Set!";
+            progressTextEl.textContent = '';
+
+
+            const phoneNumber = '918903777979'; // Indian country code + number
+            const message = `Name: ${name}\nDepartment: ${department}\nKPRCAS Email: ${email}`;
+            const encodedMessage = encodeURIComponent(message);
+            
+            whatsappLink.href = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+        }
+        
+        function startGame() {
+            currentWordIndex = 0;
+            score = 0;
+            shuffledWords = shuffleArray([...words]);
+            
+            headerTitle.textContent = 'Incubation Puzzle';
+            gameArea.classList.remove('hidden');
+            userDetailsForm.classList.add('hidden');
+            whatsappContainer.classList.add('hidden');
+            emailError.classList.add('hidden');
+
+            nextWord();
+        }
+
+        // Event Listeners
+        submitBtn.addEventListener('click', checkAnswer);
+        answerInputEl.addEventListener('keyup', (e) => e.key === 'Enter' && checkAnswer());
+        userDetailsForm.addEventListener('submit', handleFormSubmit);
+        restartBtn.addEventListener('click', startGame);
+
+        // Initial game start
+        startGame();
+    </script>
+</body>
+</html>
+
